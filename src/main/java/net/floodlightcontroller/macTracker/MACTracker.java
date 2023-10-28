@@ -13,13 +13,27 @@ import org.projectfloodlight.openflow.protocol.OFType;
 import java.util.Collection;
 import java.util.Map;
 
+import net.floodlightcontroller.core.IFloodlightProviderService;
+import java.util.ArrayList;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.Set;
+import net.floodlightcontroller.packet.Ethernet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
+
 public class MACTracker implements IOFMessageListener, IFloodlightModule {
+
+    protected IFloodlightProviderService floodlightProvider;
+    protected Set<Long> macAddresses;
+    protected static Logger logger;
 
     // EL nombre de la clase
     @Override
     public String getName() {
         // TODO Auto-generated method stub
-        return null;
+        return MACTracker.class.getSimpleName();
     }
 
 
@@ -50,30 +64,43 @@ public class MACTracker implements IOFMessageListener, IFloodlightModule {
 
     @Override
     public Collection<Class<? extends IFloodlightService>> getModuleDependencies() {
-        // TODO Auto-generated method stub
-        return null;
+        Collection<Class<? extends IFloodlightService>> l =
+                new ArrayList<Class<? extends IFloodlightService>>();
+        l.add(IFloodlightProviderService.class);
+        return l;
     }
 
     @Override
     public void init(FloodlightModuleContext context)
             throws FloodlightModuleException {
         // TODO Auto-generated method stub
+        floodlightProvider = context.getServiceImpl(IFloodlightProviderService.class);
+        macAddresses = new ConcurrentSkipListSet<Long>();
+        logger = LoggerFactory.getLogger(MACTracker.class);
 
     }
 
     @Override
     public void startUp(FloodlightModuleContext context) {
         // TODO Auto-generated method stub
-
+        floodlightProvider.addOFMessageListener(OFType.PACKET_IN, this);
     }
 
     @Override
     public Command receive(IOFSwitch sw, OFMessage msg, FloodlightContext cntx) {
         // TODO Auto-generated method stub
-//        String dispositivo = sw.toString();
-//        String mensaje = msg.toString();
-//        String contexto = cntx.toString();
-        return null;
+        Ethernet eth =
+                IFloodlightProviderService.bcStore.get(cntx,
+                        IFloodlightProviderService.CONTEXT_PI_PAYLOAD);
+
+        Long sourceMACHash = eth.getSourceMACAddress().getLong();
+        if (!macAddresses.contains(sourceMACHash)) {
+            macAddresses.add(sourceMACHash);
+            logger.info("MAC Address: {} seen on switch: {}",
+                    eth.getSourceMACAddress().toString(),
+                    sw.getId().toString());
+        }
+        return Command.CONTINUE;
     }
 
 }
