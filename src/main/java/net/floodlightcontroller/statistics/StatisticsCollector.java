@@ -1,16 +1,14 @@
 package net.floodlightcontroller.statistics;
 
 import java.lang.Thread.State;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
 
 import org.projectfloodlight.openflow.protocol.OFPortStatsEntry;
 import org.projectfloodlight.openflow.protocol.OFPortStatsReply;
@@ -61,6 +59,13 @@ public class StatisticsCollector implements IFloodlightModule, IStatisticsServic
 
 	private static final HashMap<NodePortTuple, SwitchPortBandwidth> portStats = new HashMap<NodePortTuple, SwitchPortBandwidth>();
 	private static final HashMap<NodePortTuple, SwitchPortBandwidth> tentativePortStats = new HashMap<NodePortTuple, SwitchPortBandwidth>();
+
+
+	Properties properties = new Properties();
+	InputStream inputStream = getClass().getResourceAsStream("/floodlightdefault.properties");
+	int portTxThreshold = Integer.parseInt(properties.getProperty("PortTxThreshold"));
+	int portRxThreshold = Integer.parseInt(properties.getProperty("PortRxThreshold"));
+
 
 	/**
 	 * Run periodically to collect all port statistics. This only collects
@@ -239,9 +244,15 @@ public class StatisticsCollector implements IFloodlightModule, IStatisticsServic
 	 */
 	
 	@Override
-	public SwitchPortBandwidth getBandwidthConsumption(DatapathId dpid, OFPort p) {
+	public static SwitchPortBandwidth getBandwidthConsumption(DatapathId dpid, OFPort p) {
 		return portStats.get(new NodePortTuple(dpid, p));
 	}
+
+
+	// Actividad 3
+
+	// Obtener los valores de ancho de banda TX y RX del puerto específico
+
 	
 
 	@Override
